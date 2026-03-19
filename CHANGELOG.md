@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.4.0 - 2026-03-19
+
+- Upgraded dependencies for Laravel 13.
+
 ## 3.3.0 - 2025-03-31
 
 - Upgraded dependencies for Laravel 12.
