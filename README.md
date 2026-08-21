@@ -1,4 +1,4 @@
-# TypedCMS Starter Kit for Laravel
+# TypeDCMS Starter Kit for Laravel
 
 ![Static Badge](https://img.shields.io/badge/tests-passing-green)
 ![GitHub License](https://img.shields.io/github/license/typedcms/laravel-starter-kit)
@@ -9,7 +9,7 @@
 [![Static Badge](https://img.shields.io/badge/honeystone-fa6900)](https://honeystone.com)
 
 Our stater kits are tailored solutions for each platform, unlike the simple API
-wrappers offered by other vendors. The [TypedCMS](https://typedcms.com) starter
+wrappers offered by other vendors. The [TypeDCMS](https://typedcms.com) starter
 kit for Laravel provides Eloquent-like models, repositories, query caching and a
 simple mechanism for adding custom webhook controllers and handlers.
 
@@ -41,4 +41,4 @@ A list of changes can be found in the [CHANGELOG.md](CHANGELOG.md) file.
 
 ## License
 
-[MIT](LICENSE.md) © [TypedCMS Ltd](https://typedcms.com)
+[MIT](LICENSE.md) © [TypeDCMS Ltd](https://typedcms.com)

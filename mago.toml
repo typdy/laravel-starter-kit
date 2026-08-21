@@ -1,0 +1,82 @@
+#:schema https://mago.carthage.software/1.43.0/schema.json
+# Welcome to Mago!
+# For full documentation, see https://mago.carthage.software/1.43.0/en/tools/overview/
+version = "1"
+php-version = "8.5.0"
+
+[source]
+paths = ["src/", "tests/"]
+includes = ["vendor/"]
+excludes = ["build/**"]
+
+[source.glob]
+literal-separator = true
+
+[formatter]
+print-width = 120
+tab-width = 4
+use-tabs = false
+indent-heredoc = false
+space-after-logical-not-unary-prefix-operator = false
+null-type-hint = "question"
+space-before-arrow-function-parameter-list-parenthesis = true
+always-break-named-arguments-list = false
+preserve-breaking-member-access-chain = true
+preserve-breaking-argument-list = true
+preserve-breaking-array-like = true
+preserve-breaking-parameter-list = true
+preserve-breaking-attribute-list = true
+preserve-breaking-conditional-expression = true
+sort-class-methods = true
+empty-line-after-control-structure = true
+empty-line-before-return = true
+
+[linter]
+integrations = ["laravel", "pest"]
+
+[linter.rules]
+literal-named-argument = { enabled = true }
+too-many-methods = { enabled = false }
+kan-defect = { enabled = false }
+cyclomatic-complexity = { enabled = false }
+too-many-enum-cases = { enabled = false }
+no-redundant-file = { enabled = false }
+assertion-style = { style = "this" }
+strict-assertions = { enabled = false }
+no-else-clause = { enabled = false }
+no-boolean-flag-parameter = { enabled = false }
+no-shorthand-ternary = { enabled = false }
+strict-types = { enabled = true }
+excessive-parameter-list = { enabled = false }
+halstead = { enabled = false }
+no-redundant-use = { enabled = true }
+no-empty-comment = { enabled = false }
+single-class-per-file = { enabled = false }
+instanceof-stringable = { enabled = false }
+sensitive-parameter = { enabled = false }
+
+[analyzer]
+plugins = []
+excludes = ["tests/"]
+find-unused-expressions = true
+find-unused-definitions = true
+analyze-dead-code = true
+check-throws = true
+unchecked-exceptions = [
+    "Error",
+    "LogicException",
+    "RuntimeException",
+    "ReflectionException",
+    "Illuminate\\Contracts\\Container\\BindingResolutionException",
+]
+unchecked-exception-classes = []
+check-missing-override = true
+find-unused-parameters = true
+enforce-class-finality = true
+require-api-or-internal = true
+check-experimental = true
+strict-list-index-checks = true
+strict-array-index-existence = true
+no-boolean-literal-comparison = true
+memoize-properties = true
+allow-array-truthy-operand = false

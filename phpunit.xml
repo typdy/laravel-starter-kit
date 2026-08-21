@@ -6,10 +6,10 @@
     colors="true"
 >
     <testsuites>
-        <testsuite name="feature">
+        <testsuite name="Feature">
             <directory>./tests/Feature</directory>
         </testsuite>
-        <testsuite name="unit">
+        <testsuite name="Unit">
             <directory>./tests/Unit</directory>
         </testsuite>
     </testsuites>

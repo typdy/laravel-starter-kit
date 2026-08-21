@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace TypedCMS\LaravelStarterKit\Tests;
+namespace Typdy\StarterKit\Laravel\Tests;
 
 use Illuminate\Support\ServiceProvider;
 use Orchestra\Testbench\TestCase as OrchestraTestCase;
-use TypedCMS\LaravelStarterKit\Providers\StarterKitServiceProvider;
+use Typdy\StarterKit\Laravel\ServiceProvider as TypdyServiceProvider;
 
 abstract class TestCase extends OrchestraTestCase
 {
@@ -15,6 +15,6 @@ abstract class TestCase extends OrchestraTestCase
      */
     protected function getPackageProviders($app): array
     {
-        return [StarterKitServiceProvider::class];
+        return [TypdyServiceProvider::class];
     }
 }
