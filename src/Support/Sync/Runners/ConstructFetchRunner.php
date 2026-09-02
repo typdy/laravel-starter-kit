@@ -32,6 +32,11 @@ final class ConstructFetchRunner
 {
     use HasTelemetry;
 
+    /**
+     * @var array<string, bool>
+     */
+    private array $skipTrimWarningShown = [];
+
     public function __construct(
         private readonly EloquentSync $command,
         private readonly int $pageSize = 20,
@@ -142,7 +147,7 @@ final class ConstructFetchRunner
         $parameters['page[number]'] = $pageNumber;
         $parameters['page[size]'] = $pageSize;
 
-        $skip = $this->trimSkipIdentifiers($state->includedConstructs[$blueprint] ?? []);
+        $skip = $this->trimSkipIdentifiers($blueprint, $state->includedConstructs[$blueprint] ?? []);
 
         if ($skip !== []) {
             $parameters['filter[id][not]'] = implode(',', $skip);
@@ -192,7 +197,7 @@ final class ConstructFetchRunner
      *
      * @return array<int, string>
      */
-    private function trimSkipIdentifiers(array $skip): array
+    private function trimSkipIdentifiers(string $blueprint, array $skip): array
     {
         if ($skip === []) {
             return [];
@@ -215,8 +220,12 @@ final class ConstructFetchRunner
             $length += $separator + $idLength;
         }
 
-        if (count($trimmed) < count($skip)) {
+        $shown = $this->skipTrimWarningShown[$blueprint] ?? false;
+
+        if (count($trimmed) < count($skip) && !$shown) {
             warning('Skipping some identifiers to avoid exceeding the maximum length of the request parameters.');
+
+            $this->skipTrimWarningShown[$blueprint] = true;
         }
 
         return $trimmed;
