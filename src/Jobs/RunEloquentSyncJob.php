@@ -52,6 +52,7 @@ final class RunEloquentSyncJob implements ShouldQueue
         }
 
         $options = $this->options;
+        $options['--no-interaction'] = true;
 
         if ($this->constructId !== null) {
             $options['--id'] = $this->constructId;

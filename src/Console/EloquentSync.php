@@ -222,6 +222,10 @@ final class EloquentSync extends Command implements SignalableCommandInterface
      */
     private function showSummary(array $models, SyncStateData $state): bool
     {
+        if (!$this->input->isInteractive()) {
+            return true;
+        }
+
         callout(
             label: 'Sync Summary',
             content: 'The following is a summary of the content that will be synced to the database. Please review the information below before proceeding.',

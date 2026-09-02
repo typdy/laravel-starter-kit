@@ -24,6 +24,7 @@ it('completes without requeue when sync command succeeds', function () {
         ->shouldReceive('call')
         ->once()
         ->with('typdy:eloquent:sync', [
+            '--no-interaction' => true,
             '--team' => 'team-test',
             '--project' => 'project-test',
             '--blueprint' => 'article',
@@ -50,6 +51,7 @@ it('releases with backoff when sync command returns lock-busy exit code', functi
     $artisan = mock(ConsoleKernel::class);
 
     $options = [
+        '--no-interaction' => true,
         '--team' => 'team-test',
         '--project' => 'project-test',
         '--blueprint' => 'article',
@@ -90,6 +92,7 @@ it('throws when sync fails for a non-lock reason', function () {
     $artisan = mock(ConsoleKernel::class);
 
     $options = [
+        '--no-interaction' => true,
         '--team' => 'team-test',
         '--project' => 'project-test',
         '--blueprint' => 'article',

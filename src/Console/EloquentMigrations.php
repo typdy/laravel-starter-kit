@@ -115,6 +115,10 @@ final class EloquentMigrations extends Command
      */
     private function confirmPlan(array $plans): bool
     {
+        if (!$this->input->isInteractive()) {
+            return true;
+        }
+
         callout(
             label: 'Migration Plan',
             content: 'The following migrations will be generated. Please review and confirm before proceeding.',
