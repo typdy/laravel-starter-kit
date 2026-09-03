@@ -159,9 +159,6 @@ trait UsesTypdy
         return false;
     }
 
-    /**
-     * @mago-expect analysis:mixed-property-type-coercion
-     */
     public function hydrateFromResource(Resource $resource): Construct
     {
         if ($resource->type !== $this->getBlueprint()) {
@@ -180,15 +177,13 @@ trait UsesTypdy
         $attributes = $this->camelFields($resource->attributes);
 
         $this->id = (int) $resource->id;
-        $this->identifier = $attributes['identifier'] ?? null;
-        $this->created = $attributes['created'] ?? null;
-        $this->updated = $attributes['updated'] ?? null;
 
         $this->setAttribute('id', $this->id);
-        $this->setAttribute('identifier', $this->identifier);
         $this->setAttribute('resource', $resource->toArray());
-        $this->setAttribute('created', $this->created);
-        $this->setAttribute('updated', $this->updated);
+
+        $this->setAttribute('identifier', $attributes['identifier'] ?? null);
+        $this->setAttribute('created', $attributes['created'] ?? null);
+        $this->setAttribute('updated', $attributes['updated'] ?? null);
 
         $fillableAttributes = [];
 
@@ -289,6 +284,28 @@ trait UsesTypdy
     public function project(Builder $query, string $project): void
     {
         $query->where('project', $project);
+    }
+
+    /**
+     * Ensure that attributes set via fill or forceFill are promoted to actual
+     * properties on the model, if they exist.
+     *
+     * @param string $key
+     * @param mixed $value
+     *
+     * @return mixed
+     *
+     * @mago-ignore analysis:all meh
+     */
+    public function setAttribute($key, $value): mixed
+    {
+        $returned = parent::setAttribute($key, $value);
+
+        if (in_array($key, ['identifier', 'created', 'updated'], strict: true)) {
+            $this->$key = $value;
+        }
+
+        return $returned;
     }
 
     #[Scope]
