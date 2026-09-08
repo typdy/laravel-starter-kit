@@ -26,7 +26,7 @@ it('throws when blueprint document data is not a resource list', function () {
     $planner->plan([], [], $document);
 })->throws(RuntimeException::class, 'Blueprints document must contain an array of resources.');
 
-it('plans create migrations with mapped field types and json fallback fields', function () {
+it('plans create migrations with mapped field types and text fallback fields', function () {
     $planner = new MigrationPlanner();
 
     $model = new
@@ -92,8 +92,8 @@ it('plans create migrations with mapped field types and json fallback fields', f
     expect($plan->lines)->toBe([
         '$table->string(\'title\');',
         '$table->timestamp(\'publishedAt\');',
-        '$table->json(\'author\')->nullable();',
-        '$table->json(\'extraPayload\')->nullable();',
+        '$table->text(\'author\')->nullable();',
+        '$table->text(\'extraPayload\')->nullable();',
     ]);
 });
 

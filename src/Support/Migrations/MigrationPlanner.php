@@ -62,9 +62,9 @@ final readonly class MigrationPlanner
                 }
 
                 // if the model defines it, but not the blueprint,
-                //  we'll make it nullable for compatibility
+                //  we'll make it nullable text for compatibility
                 if (!array_key_exists($column, $typeIndex[$blueprint])) {
-                    $lines[] = "\$table->json('{$column}')->nullable();";
+                    $lines[] = "\$table->text('{$column}')->nullable();";
 
                     continue;
                 }
