@@ -10,11 +10,11 @@ final readonly class BlueprintTypeMapper
     {
         return match ($type) {
             'identifier', 'text', 'email', 'tel', 'url', 'radio-group' => 'string',
-            'colour', 'table', 'select', 'checkbox-group', 'date-range' => 'json',
+            'colour', 'table', 'checkbox-group', 'date-range' => 'json',
             'integer' => 'integer',
             'float', 'range' => 'float',
             'checkbox' => 'boolean',
-            'textarea', 'rte', 'code' => 'text',
+            'textarea', 'rte', 'code', 'select' => 'text',
             'date-time', 'date', 'time' => 'timestamp',
             default => 'json',
         };
