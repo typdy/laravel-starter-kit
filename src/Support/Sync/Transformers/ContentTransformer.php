@@ -18,6 +18,7 @@ use Typdy\StarterKit\Utils\Str;
 
 use function count;
 use function in_array;
+use function is_numeric;
 use function ksort;
 use function Laravel\Prompts\progress;
 use function sprintf;
@@ -94,7 +95,7 @@ final readonly class ContentTransformer
             /** @var list<Resource> $relationships */
             $relationships = Arr::wrap($relation->data ?? []);
 
-            foreach ($relationships as $target) {
+            foreach ($relationships as $index => $target) {
                 $targetKey = $this->makeResourceKey($target);
                 $edgeKey = $this->makeEdgeKey($resourceKey, $name, $targetKey);
 
@@ -103,7 +104,12 @@ final readonly class ContentTransformer
                 }
 
                 $content->seenRelationships[] = $edgeKey;
-                $content->relationships[] = new RelationshipEdgeData($resourceKey, $name, $targetKey);
+                $content->relationships[] = new RelationshipEdgeData(
+                    $resourceKey,
+                    $name,
+                    $targetKey,
+                    is_numeric($target->meta['order'] ?? null) ? (int) $target->meta['order'] : (int) $index,
+                );
             }
         }
     }

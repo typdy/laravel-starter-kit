@@ -76,11 +76,24 @@ final readonly class RelationshipPlanner
     ): ?MigrationPlanData {
         $pivot = $relation->getTable();
 
-        if ($this->pivotExists($pivot, $pivots, $existing)) {
+        if (in_array($pivot, $pivots, strict: true)) {
             return null;
         }
 
         $pivots[] = $pivot;
+
+        if (array_key_exists($pivot, $existing)) {
+            if ($this->columnExists($pivot, 'meta_order', $existing)) {
+                return null;
+            }
+
+            return new MigrationPlanData(
+                table: $pivot,
+                create: false,
+                lines: ["\$table->unsignedInteger('meta_order')->default(0);"],
+                name: "add_meta_order_to_{$pivot}_table",
+            );
+        }
 
         $foreignKey = $relation->getForeignPivotKeyName();
         $relatedKey = $relation->getRelatedPivotKeyName();
@@ -92,6 +105,7 @@ final readonly class RelationshipPlanner
             lines: [
                 "\$table->foreignId('{$foreignKey}')->constrained('{$table}')->cascadeOnDelete();",
                 "\$table->foreignId('{$relatedKey}')->constrained('{$relatedTable}')->cascadeOnDelete();",
+                "\$table->unsignedInteger('meta_order')->default(0);",
                 "\$table->unique(['{$foreignKey}', '{$relatedKey}']);",
             ],
             name: "create_{$pivot}_table",
@@ -119,15 +133,6 @@ final readonly class RelationshipPlanner
             ],
             name: "add_{$foreignKey}_to_{$table}_table",
         );
-    }
-
-    /**
-     * @param array<string, array<int, string>> $existing
-     * @param array<int, string> $pivots
-     */
-    private function pivotExists(string $pivot, array $pivots, array $existing): bool
-    {
-        return in_array($pivot, $pivots, strict: true) || array_key_exists($pivot, $existing);
     }
 
     /**

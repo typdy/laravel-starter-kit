@@ -35,6 +35,7 @@ it('plans belongs-to and belongs-to-many migrations for typdy construct relation
     expect($byTable['article_tag']->lines)->toBe([
         '$table->foreignId(\'article_id\')->constrained(\'typdy_articles\')->cascadeOnDelete();',
         '$table->foreignId(\'tag_id\')->constrained(\'typdy_tags\')->cascadeOnDelete();',
+        '$table->unsignedInteger(\'meta_order\')->default(0);',
         '$table->unique([\'article_id\', \'tag_id\']);',
     ]);
     expect($byTable['article_tag']->stub)->toBe('table-migration');
@@ -68,8 +69,24 @@ it('creates pivot migration once and skips when pivot table already exists', fun
     expect($plans[0]->table)->toBe('article_tag');
 
     $existingPivot = [
-        'article_tag' => ['article_id', 'tag_id'],
+        'article_tag' => ['article_id', 'tag_id', 'meta_order'],
     ];
 
     expect($planner->plan([new ArticleWithTagsModel()], $existingPivot))->toBeEmpty();
+});
+
+it('plans adding meta_order to an existing pivot table that lacks it', function () {
+    $planner = new RelationshipPlanner();
+
+    $plans = $planner->plan([new ArticleWithTagsModel()], [
+        'article_tag' => ['article_id', 'tag_id'],
+    ]);
+
+    expect($plans)->toHaveCount(1);
+    expect($plans[0]->table)->toBe('article_tag');
+    expect($plans[0]->create)->toBeFalse();
+    expect($plans[0]->name)->toBe('add_meta_order_to_article_tag_table');
+    expect($plans[0]->lines)->toBe([
+        '$table->unsignedInteger(\'meta_order\')->default(0);',
+    ]);
 });

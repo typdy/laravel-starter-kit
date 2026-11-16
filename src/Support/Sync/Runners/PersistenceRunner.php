@@ -176,7 +176,9 @@ final class PersistenceRunner
 
                     if ($relation instanceof BelongsToMany) {
                         $toMany[$reference->sourceKey][$method] ??= [];
-                        $toMany[$reference->sourceKey][$method][$target->getKey()] = (int) $target->getKey();
+                        $toMany[$reference->sourceKey][$method][$target->getKey()] = [
+                            'meta_order' => $reference->order,
+                        ];
 
                         continue;
                     }

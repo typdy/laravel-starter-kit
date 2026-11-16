@@ -10,6 +10,7 @@ final readonly class RelationshipEdgeData
         public string $sourceKey,
         public string $relationship,
         public string $targetKey,
+        public int $order = 0,
     ) {}
 
     /**
@@ -17,6 +18,7 @@ final readonly class RelationshipEdgeData
      *     sourceKey: string,
      *     relationship: string,
      *     targetKey: string,
+     *     order: int,
      * }
      */
     public function toArray(): array
@@ -25,6 +27,7 @@ final readonly class RelationshipEdgeData
             'sourceKey' => $this->sourceKey,
             'relationship' => $this->relationship,
             'targetKey' => $this->targetKey,
+            'order' => $this->order,
         ];
     }
 }

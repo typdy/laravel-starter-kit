@@ -124,6 +124,7 @@ beforeEach(function () {
     Schema::create('sync_article_tag', function (Blueprint $table): void {
         $table->foreignId('article_id')->constrained('sync_articles')->cascadeOnDelete();
         $table->foreignId('tag_id')->constrained('sync_tags')->cascadeOnDelete();
+        $table->unsignedInteger('meta_order')->default(0);
         $table->unique(['article_id', 'tag_id']);
     });
 });
@@ -256,4 +257,128 @@ it('removes belongs-to and belongs-to-many links when single construct sync payl
     expect($article)->not->toBeNull();
     expect($article?->category_id)->toBeNull();
     expect(DB::table('sync_article_tag')->where('article_id', 100)->count())->toBe(0);
+});
+
+it('persists to-many relationship order from resource meta order onto the pivot', function () {
+    $tag = static fn (int $id): string => <<<JSON
+    {"type":"tag","id":"{$id}","attributes":{"identifier":"tag-{$id}","title":"Tag {$id}","translations":{},"created":"2026-01-01T00:00:00+00:00","updated":"2026-01-01T00:00:00+00:00"}}
+    JSON;
+
+    $client = mock(ClientContract::class);
+    $client
+        ->shouldReceive('request')
+        ->andReturn(
+            // globals
+            new Response(200, body: '{"data": []}'),
+            // article page count
+            new Response(200, body: '{"data": [], "meta": {"total": 1}}'),
+            // article page, tags are listed as 10, 11, 12 but ordered 12, 10, 11 by meta.order
+            new Response(
+                200,
+                body: <<<JSON
+                {
+                  "data": [
+                    {
+                      "type": "article",
+                      "id": "100",
+                      "attributes": {
+                        "identifier": "article-100",
+                        "title": "Ordered",
+                        "translations": {},
+                        "created": "2026-01-02T00:00:00+00:00",
+                        "updated": "2026-01-02T00:00:00+00:00"
+                      },
+                      "relationships": {
+                        "tags": {
+                          "data": [
+                            {"type": "tag", "id": "10", "meta": {"order": 1}},
+                            {"type": "tag", "id": "11", "meta": {"order": 2}},
+                            {"type": "tag", "id": "12", "meta": {"order": 0}}
+                          ]
+                        }
+                      }
+                    }
+                  ],
+                  "included": [{$tag(10)}, {$tag(11)}, {$tag(12)}]
+                }
+                JSON,
+            ),
+            // everything after this (tag page count) reports nothing left to fetch
+            new Response(200, body: '{"data": [], "meta": {"total": 0}}'),
+        );
+
+    app()->instance(ClientContract::class, $client);
+
+    $modelResolver = mock(ResolvesModels::class);
+    $modelResolver
+        ->shouldReceive('resolveMany')
+        ->once()
+        ->with('team-test', 'project-test')
+        ->andReturn([new SyncArticleModel(), new SyncTagModel()]);
+
+    $articleRepo = mock(Collection::class);
+    $articleRepo->shouldReceive('isGlobal')->andReturn(false);
+    $articleRepo->shouldReceive('getBlueprint')->andReturn('article');
+
+    $tagRepo = mock(Collection::class);
+    $tagRepo->shouldReceive('isGlobal')->andReturn(false);
+    $tagRepo->shouldReceive('getBlueprint')->andReturn('tag');
+
+    $repoResolver = mock(ResolvesRepositories::class);
+    $repoResolver
+        ->shouldReceive('resolveMany')
+        ->once()
+        ->with('team-test', 'project-test')
+        ->andReturn([$articleRepo, $tagRepo]);
+
+    app()->instance(ResolvesModels::class, $modelResolver);
+    app()->instance(ResolvesRepositories::class, $repoResolver);
+
+    $this
+        ->artisan('typdy:eloquent:sync')
+        ->expectsConfirmation('Proceed with syncronization of the above content?', 'yes')
+        ->assertSuccessful();
+
+    $pivot = DB::table('sync_article_tag')
+        ->where('article_id', 100)
+        ->orderBy('meta_order')
+        ->pluck('meta_order', 'tag_id')
+        ->all();
+
+    expect($pivot)->toBe([12 => 0, 10 => 1, 11 => 2]);
+
+    $article = SyncArticleModel::query()->find(100);
+
+    expect($article?->tagsRelation()->get()->modelKeys())->toBe([12, 10, 11]);
+});
+
+it('orders plain belongs-to-many relations to typdy constructs by pivot meta_order', function () {
+    $row = static fn (string $type, int $id): array => [
+        'id' => $id,
+        'identifier' => "{$type}-{$id}",
+        'team' => 'team-test',
+        'project' => 'project-test',
+        'title' => "{$type} {$id}",
+        'translations' => '{}',
+        'resource' => "{\"type\":\"{$type}\",\"id\":\"{$id}\",\"attributes\":{}}",
+        'created' => '2026-01-01 00:00:00',
+        'updated' => '2026-01-01 00:00:00',
+    ];
+
+    DB::table('sync_tags')->insert([$row('tag', id: 10), $row('tag', id: 11), $row('tag', id: 12)]);
+    DB::table('sync_articles')->insert($row('article', id: 100));
+
+    DB::table('sync_article_tag')->insert([
+        ['article_id' => 100, 'tag_id' => 10, 'meta_order' => 2],
+        ['article_id' => 100, 'tag_id' => 11, 'meta_order' => 0],
+        ['article_id' => 100, 'tag_id' => 12, 'meta_order' => 1],
+    ]);
+
+    $article = SyncArticleModel::query()->find(100);
+
+    expect($article?->tagsRelation()->get()->modelKeys())->toBe([11, 12, 10]);
+
+    $eager = SyncArticleModel::query()->with('tagsRelation')->find(100);
+
+    expect($eager?->tagsRelation->modelKeys())->toBe([11, 12, 10]);
 });

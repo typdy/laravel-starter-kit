@@ -257,6 +257,7 @@ it('serializes construct attributes, relationships and metadata for sync body', 
     Schema::create('typdy_models_models', function (Blueprint $table) {
         $table->foreignId('model_id')->constrained('typdy_models');
         $table->foreignId('related_model_id')->constrained('typdy_models');
+        $table->unsignedInteger('meta_order')->default(value: 0);
     });
 
     Typdy::$config = new TypdyConfig(

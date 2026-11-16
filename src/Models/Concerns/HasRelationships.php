@@ -4,9 +4,13 @@ declare(strict_types=1);
 
 namespace Typdy\StarterKit\Laravel\Models\Concerns;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\Pivot;
 use ReflectionClass;
 use ReflectionMethod;
 use Typdy\StarterKit\Models\Attributes\Relationship;
+use Typdy\StarterKit\Models\Contracts\Construct;
 use Typdy\StarterKit\Utils\Str;
 
 use function array_key_exists;
@@ -35,6 +39,53 @@ trait HasRelationships
     abstract public function getProject(): string;
 
     abstract public function getTeam(): string;
+
+    /**
+     * Define a many-to-many relationship.
+     *
+     * @template TRelatedModel of Model
+     * @template TPivotModel of Pivot
+     * @template TPivotTable of string|null
+     *
+     * @param class-string<TRelatedModel> $related
+     * @param class-string<TPivotModel>|TPivotTable $table
+     * @param string|null $foreignPivotKey
+     * @param string|null $relatedPivotKey
+     * @param string|null $parentKey
+     * @param string|null $relatedKey
+     * @param string|null $relation
+     *
+     * @return BelongsToMany<TRelatedModel, $this, TPivotModel>
+     *
+     * @mago-expect analysis:docblock-type-mismatch
+     */
+    public function belongsToMany(
+        $related,
+        $table = null,
+        $foreignPivotKey = null,
+        $relatedPivotKey = null,
+        $parentKey = null,
+        $relatedKey = null,
+        $relation = null,
+    ): BelongsToMany {
+        // @mago-expect analysis:invalid-parent-type
+        /** @var BelongsToMany<TRelatedModel, $this, TPivotModel> $relation */
+        $relation = parent::belongsToMany(
+            $related,
+            $table,
+            $foreignPivotKey,
+            $relatedPivotKey,
+            $parentKey,
+            $relatedKey,
+            $relation,
+        );
+
+        if ($relation->getRelated() instanceof Construct) {
+            $relation->withPivot('meta_order')->orderByPivot('meta_order');
+        }
+
+        return $relation;
+    }
 
     /**
      * @return array<string, mixed>
