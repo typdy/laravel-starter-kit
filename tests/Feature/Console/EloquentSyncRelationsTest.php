@@ -10,6 +10,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Schema\ForeignIdColumnDefinition;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Typdy\StarterKit\Api\Contracts\Client as ClientContract;
 use Typdy\StarterKit\Attributes\Blueprint as TypdyBlueprint;
@@ -381,4 +382,48 @@ it('orders plain belongs-to-many relations to typdy constructs by pivot meta_ord
     $eager = SyncArticleModel::query()->with('tagsRelation')->find(100);
 
     expect($eager?->tagsRelation->modelKeys())->toBe([11, 12, 10]);
+});
+
+it('logs a single failure digest with status codes in non-interactive mode and still completes', function () {
+    Log::spy();
+
+    $client = mock(ClientContract::class);
+    $client->shouldReceive('request')->andReturn(new Response(401, body: '{"data": null}'));
+
+    app()->instance(ClientContract::class, $client);
+
+    $modelResolver = mock(ResolvesModels::class);
+    $modelResolver
+        ->shouldReceive('resolveOne')
+        ->once()
+        ->with('team-test', 'project-test', 'article')
+        ->andReturn(new SyncArticleModel());
+
+    $repo = mock(Collection::class);
+    $repo->shouldReceive('isGlobal')->andReturn(false);
+
+    $repoResolver = mock(ResolvesRepositories::class);
+    $repoResolver
+        ->shouldReceive('resolveOne')
+        ->once()
+        ->with('team-test', 'project-test', 'article')
+        ->andReturn($repo);
+
+    app()->instance(ResolvesModels::class, $modelResolver);
+    app()->instance(ResolvesRepositories::class, $repoResolver);
+
+    $this
+        ->artisan('typdy:eloquent:sync', ['--blueprint' => 'article', '--id' => 100, '--no-interaction' => true])
+        ->assertSuccessful();
+
+    Log::shouldHaveReceived('warning')
+        ->once()
+        ->withArgs(
+            static fn (string $message, array $context): bool => (
+                $message === 'typdy eloquent sync completed with failures.'
+                && $context['blueprint'] === 'article'
+                && $context['failures'] === ['article' => 1]
+                && $context['statuses'] === ['article' => [401]]
+            ),
+        );
 });

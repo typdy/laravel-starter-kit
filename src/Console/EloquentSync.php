@@ -6,6 +6,7 @@ namespace Typdy\StarterKit\Laravel\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Override;
 use Symfony\Component\Console\Command\SignalableCommandInterface;
@@ -18,6 +19,7 @@ use Typdy\StarterKit\Laravel\Console\Concerns\HasRepoResolution;
 use Typdy\StarterKit\Laravel\Console\Concerns\HasScope;
 use Typdy\StarterKit\Laravel\Console\Concerns\HasSyncState;
 use Typdy\StarterKit\Laravel\Console\Concerns\RetriesRequests;
+use Typdy\StarterKit\Laravel\Support\Sync\Data\ContentData;
 use Typdy\StarterKit\Laravel\Support\Sync\Data\IncludeDiscoveryData;
 use Typdy\StarterKit\Laravel\Support\Sync\Data\SyncStateData;
 use Typdy\StarterKit\Laravel\Support\Sync\FetchPlanner;
@@ -32,6 +34,7 @@ use Typdy\StarterKit\Resolvers\Contracts\ResolvesModels;
 use Typdy\StarterKit\Resolvers\Contracts\ResolvesRepositories;
 use Typdy\StarterKit\Utils\Arr;
 
+use function array_filter;
 use function array_map;
 use function count;
 use function implode;
@@ -88,6 +91,16 @@ final class EloquentSync extends Command implements SignalableCommandInterface
             if ($models === []) {
                 info('Nothing to sync.');
 
+                if (!$this->input->isInteractive()) {
+                    [$team, $project, $blueprint] = $this->getScope();
+
+                    Log::warning('typdy eloquent sync found no models to sync.', [
+                        'team' => $team,
+                        'project' => $project,
+                        'blueprint' => $blueprint,
+                    ]);
+                }
+
                 return Command::SUCCESS;
             }
 
@@ -128,6 +141,8 @@ final class EloquentSync extends Command implements SignalableCommandInterface
 
             new PersistenceRunner()->run($content, $models);
 
+            $this->logFailureDigest($state, $content);
+
             $this->store->clear();
 
             return Command::SUCCESS;
@@ -135,6 +150,8 @@ final class EloquentSync extends Command implements SignalableCommandInterface
             info('Sync interrupted. You can resume this session with --resume once the issue is resolved.');
 
             $this->error($e::class . ': ' . $e->getMessage());
+
+            report($e);
 
             if ($this->output->isVerbose()) {
                 $this->line($e->getTraceAsString());
@@ -168,6 +185,48 @@ final class EloquentSync extends Command implements SignalableCommandInterface
             ['blueprint', null, InputOption::VALUE_REQUIRED, 'Blueprint identifier to scope the sync.'],
             ['id', null, InputOption::VALUE_REQUIRED, 'Construct id to scope the sync to a single construct.'],
         ];
+    }
+
+    private function logFailureDigest(SyncStateData $state, ContentData $content): void
+    {
+        if ($this->input->isInteractive()) {
+            return;
+        }
+
+        $failures = array_filter($state->construct->blueprintFailures);
+        $statuses = $state->construct->failureStatuses;
+        $globalFailed = $state->global->failed;
+
+        if ($failures === [] && $statuses === [] && $globalFailed === []) {
+            return;
+        }
+
+        [$team, $project, $blueprint] = $this->getScope();
+
+        $pages = [];
+
+        foreach ($state->construct->blueprintPages as $name => $expected) {
+            $pages[$name] = count($state->construct->fetchedPages[$name] ?? []) . '/' . $expected;
+        }
+
+        $persisted = [];
+
+        foreach ($content->resourcesByType as $name => $resources) {
+            $persisted[$name] = count($resources);
+        }
+
+        Log::warning('typdy eloquent sync completed with failures.', [
+            'team' => $team,
+            'project' => $project,
+            'blueprint' => $blueprint,
+            'construct_id' => $this->option('id'),
+            'resumed' => (bool) $this->option('resume'),
+            'failures' => $failures,
+            'statuses' => $statuses,
+            'global_failed' => $globalFailed,
+            'pages_fetched' => $pages,
+            'persisted' => $persisted,
+        ]);
     }
 
     private function resolveScopedConstructId(): ?int
@@ -303,6 +362,10 @@ final class EloquentSync extends Command implements SignalableCommandInterface
         $state->construct->blueprintPages[$blueprint] = 1;
         $state->construct->fetchedPages[$blueprint] = [1];
         $state->construct->blueprintFailures[$blueprint] = $document->response->getStatusCode() === 200 ? 0 : 1;
+
+        if ($document->response->getStatusCode() !== 200) {
+            $state->construct->recordFailureStatus($blueprint, $document->response->getStatusCode());
+        }
 
         /** @var list<Resource> $resources */
         $resources = Arr::wrap($document->data ?? []);

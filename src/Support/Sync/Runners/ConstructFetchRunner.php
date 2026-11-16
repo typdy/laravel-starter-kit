@@ -121,6 +121,7 @@ final class ConstructFetchRunner
 
                     if ($document->response->getStatusCode() !== 200) {
                         $state->construct->blueprintFailures[$blueprint]++;
+                        $state->construct->recordFailureStatus($blueprint, $document->response->getStatusCode());
                     }
 
                     $state->construct->fetchedPages[$blueprint][] = $page;
@@ -177,6 +178,10 @@ final class ConstructFetchRunner
             ),
             message: 'Fetching page counts from typdy...',
         );
+
+        if ($document->response->getStatusCode() !== 200) {
+            $state->construct->recordFailureStatus($blueprint, $document->response->getStatusCode());
+        }
 
         $total = max(0, (int) ($document->meta['total'] ?? 1));
 

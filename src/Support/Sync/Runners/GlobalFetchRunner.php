@@ -109,6 +109,8 @@ final class GlobalFetchRunner
                 static fn (string $blueprint): bool => $blueprint !== $resource->type,
             )
                 |> array_values(...);
+        } else {
+            $state->construct->recordFailureStatus('global:' . $resource->type, $document->response->getStatusCode());
         }
 
         $progress->hint("Fetched global {$resource->type}, {$remaining} remaining{$eta}...");
@@ -131,6 +133,10 @@ final class GlobalFetchRunner
             callback: fn () => $this->command->request($task->path, $task->parameters),
             message: 'Fetching globals from typdy...',
         );
+
+        if ($document->response->getStatusCode() !== 200) {
+            $state->construct->recordFailureStatus('global', $document->response->getStatusCode());
+        }
 
         /** @var list<Resource> $resources  */
         $resources = Arr::wrap($document->data ?? []);

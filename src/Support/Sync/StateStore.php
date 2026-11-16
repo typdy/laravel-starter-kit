@@ -145,6 +145,7 @@ final class StateStore
          *         fetchedPages: array<string, list<int>>,
          *         constructsCount: array<string, int>,
          *         blueprintFailures: array<string, int>,
+         *         failureStatuses: array<string, list<int>>,
          *     },
          * }|null $previousState
          */

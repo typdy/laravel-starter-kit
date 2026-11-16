@@ -33,6 +33,7 @@ final class SyncStateData
      *         fetchedPages: array<string, list<int>>,
      *         constructsCount: array<string, int>,
      *         blueprintFailures: array<string, int>,
+     *         failureStatuses: array<string, list<int>>,
      *     },
      * } $data
      */
@@ -62,6 +63,7 @@ final class SyncStateData
      *         fetchedPages: array<string, list<int>>,
      *         constructsCount: array<string, int>,
      *         blueprintFailures: array<string, int>,
+     *         failureStatuses: array<string, list<int>>,
      *     },
      * }
      */
