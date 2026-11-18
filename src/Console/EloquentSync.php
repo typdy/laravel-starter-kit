@@ -139,7 +139,7 @@ final class EloquentSync extends Command implements SignalableCommandInterface
 
             $content = new ContentTransformer($this)->transform($state);
 
-            new PersistenceRunner()->run($content, $models);
+            new PersistenceRunner()->run($content, $this->resolveAllModels());
 
             $this->logFailureDigest($state, $content);
 

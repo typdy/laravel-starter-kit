@@ -234,6 +234,11 @@ it('removes belongs-to and belongs-to-many links when single construct sync payl
         ->once()
         ->with('team-test', 'project-test', 'article')
         ->andReturn($articleModel);
+    $modelResolver
+        ->shouldReceive('resolveMany')
+        ->once()
+        ->with('team-test', 'project-test')
+        ->andReturn([$articleModel, new SyncTagModel()]);
 
     $repo = mock(Collection::class);
     $repo->shouldReceive('isGlobal')->andReturn(false);
@@ -258,6 +263,77 @@ it('removes belongs-to and belongs-to-many links when single construct sync payl
     expect($article)->not->toBeNull();
     expect($article?->category_id)->toBeNull();
     expect(DB::table('sync_article_tag')->where('article_id', 100)->count())->toBe(0);
+});
+
+it('resolves all models for persistence when syncing a single construct so related models can be linked', function () {
+    $client = mock(ClientContract::class);
+    $client
+        ->shouldReceive('request')
+        ->once()
+        ->andReturn(
+            new Response(
+                200,
+                body: <<<'JSON'
+                {
+                  "data": {
+                    "type": "article",
+                    "id": "100",
+                    "attributes": {
+                      "identifier": "article-100",
+                      "title": "Linked",
+                      "translations": {},
+                      "created": "2026-01-02T00:00:00+00:00",
+                      "updated": "2026-01-02T00:00:00+00:00"
+                    },
+                    "relationships": {
+                      "tags": {"data": [{"type": "tag", "id": "10", "meta": {"order": 0}}]}
+                    }
+                  },
+                  "included": [
+                    {"type":"tag","id":"10","attributes":{"identifier":"tag-10","title":"Tag 10","translations":{},"created":"2026-01-01T00:00:00+00:00","updated":"2026-01-01T00:00:00+00:00"}}
+                  ]
+                }
+                JSON,
+            ),
+        );
+
+    app()->instance(ClientContract::class, $client);
+
+    $articleModel = new SyncArticleModel();
+
+    $modelResolver = mock(ResolvesModels::class);
+    $modelResolver
+        ->shouldReceive('resolveOne')
+        ->once()
+        ->with('team-test', 'project-test', 'article')
+        ->andReturn($articleModel);
+    // the scoped lookup only returns the article, so the tag model must come from resolveMany
+    $modelResolver
+        ->shouldReceive('resolveMany')
+        ->once()
+        ->with('team-test', 'project-test')
+        ->andReturn([$articleModel, new SyncTagModel()]);
+
+    $repo = mock(Collection::class);
+    $repo->shouldReceive('isGlobal')->andReturn(false);
+
+    $repoResolver = mock(ResolvesRepositories::class);
+    $repoResolver
+        ->shouldReceive('resolveOne')
+        ->once()
+        ->with('team-test', 'project-test', 'article')
+        ->andReturn($repo);
+
+    app()->instance(ResolvesModels::class, $modelResolver);
+    app()->instance(ResolvesRepositories::class, $repoResolver);
+
+    $this
+        ->artisan('typdy:eloquent:sync', ['--blueprint' => 'article', '--id' => 100])
+        ->expectsConfirmation('Proceed with syncronization of the above content?', 'yes')
+        ->assertSuccessful();
+
+    expect(SyncTagModel::query()->find(10))->not->toBeNull();
+    expect(DB::table('sync_article_tag')->where('article_id', 100)->pluck('tag_id')->all())->toBe([10]);
 });
 
 it('persists to-many relationship order from resource meta order onto the pivot', function () {
@@ -313,7 +389,7 @@ it('persists to-many relationship order from resource meta order onto the pivot'
     $modelResolver = mock(ResolvesModels::class);
     $modelResolver
         ->shouldReceive('resolveMany')
-        ->once()
+        ->twice()
         ->with('team-test', 'project-test')
         ->andReturn([new SyncArticleModel(), new SyncTagModel()]);
 
@@ -398,6 +474,11 @@ it('logs a single failure digest with status codes in non-interactive mode and s
         ->once()
         ->with('team-test', 'project-test', 'article')
         ->andReturn(new SyncArticleModel());
+    $modelResolver
+        ->shouldReceive('resolveMany')
+        ->once()
+        ->with('team-test', 'project-test')
+        ->andReturn([new SyncArticleModel(), new SyncTagModel()]);
 
     $repo = mock(Collection::class);
     $repo->shouldReceive('isGlobal')->andReturn(false);

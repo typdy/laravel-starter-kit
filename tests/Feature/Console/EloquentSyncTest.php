@@ -75,7 +75,7 @@ it('runs the primary interactive sync flow and persists constructs', function ()
     $modelResolver = mock(ResolvesModels::class);
     $modelResolver
         ->shouldReceive('resolveMany')
-        ->once()
+        ->twice()
         ->with('team-test', 'project-test')
         ->andReturn([new Media()]);
 
@@ -140,6 +140,11 @@ it('syncs a single construct when id and blueprint options are provided', functi
         ->once()
         ->with('team-test', 'project-test', 'media')
         ->andReturn($model);
+    $modelResolver
+        ->shouldReceive('resolveMany')
+        ->once()
+        ->with('team-test', 'project-test')
+        ->andReturn([$model]);
 
     $repo = mock(Collection::class);
     $repo->shouldReceive('isGlobal')->andReturn(false);
@@ -268,7 +273,7 @@ it('bypasses an existing lock when force is enabled', function () {
     $modelResolver = mock(ResolvesModels::class);
     $modelResolver
         ->shouldReceive('resolveMany')
-        ->once()
+        ->twice()
         ->with('team-test', 'project-test')
         ->andReturn([new Media()]);
 
@@ -335,7 +340,7 @@ it('resumes from existing sync state when resume option is enabled', function ()
     $modelResolver = mock(ResolvesModels::class);
     $modelResolver
         ->shouldReceive('resolveMany')
-        ->once()
+        ->twice()
         ->with('team-test', 'project-test')
         ->andReturn([new Media()]);
 
@@ -451,7 +456,7 @@ it('resumes a partial state and fetches only remaining pages', function () {
     $modelResolver = mock(ResolvesModels::class);
     $modelResolver
         ->shouldReceive('resolveMany')
-        ->once()
+        ->twice()
         ->with('team-test', 'project-test')
         ->andReturn([new Media()]);
 
@@ -549,7 +554,7 @@ it('retries retryable api failures and completes successfully', function () {
     $modelResolver = mock(ResolvesModels::class);
     $modelResolver
         ->shouldReceive('resolveMany')
-        ->once()
+        ->twice()
         ->with('team-test', 'project-test')
         ->andReturn([new Media()]);
 

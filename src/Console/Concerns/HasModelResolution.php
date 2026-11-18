@@ -31,6 +31,21 @@ trait HasModelResolution
     abstract private function getScope(): array;
 
     /**
+     * @return list<Construct&Model>
+     */
+    private function resolveAllModels(): array
+    {
+        [$team, $project] = $this->getScope();
+
+        // @mago-expect analysis:invalid-return-statement
+        return array_filter(
+            $this->modelResolver->resolveMany($team, $project),
+            static fn (Construct $model): bool => $model instanceof Model,
+        )
+            |> array_values(...);
+    }
+
+    /**
      * @return list<string>
      */
     private function resolveModelBlueprints(): array
