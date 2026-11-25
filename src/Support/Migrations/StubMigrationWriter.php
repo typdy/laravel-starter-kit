@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Typdy\StarterKit\Laravel\Support\Migrations;
 
+use RuntimeException;
 use Typdy\StarterKit\Laravel\Support\Migrations\Data\MigrationPlanData;
 
 use function database_path;
@@ -27,7 +28,11 @@ final readonly class StubMigrationWriter
 
         $path = database_path("migrations/{$file}");
 
-        $stub = file_get_contents("{$this->stubPath}/{$plan->stubName()}.stub") ?: '';
+        $stub = file_get_contents("{$this->stubPath}/{$plan->stubName()}.stub");
+
+        if ($stub === false || $stub === '') {
+            throw new RuntimeException("Migration stub '{$plan->stubName()}' is missing or empty.");
+        }
 
         $columns = implode("\n            ", $plan->lines);
 

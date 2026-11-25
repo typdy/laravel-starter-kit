@@ -11,6 +11,7 @@ use Typdy\StarterKit\Models\Contracts\Construct;
 use Typdy\StarterKit\Parsers\Data\Document;
 use Typdy\StarterKit\Utils\Str;
 
+use function array_diff;
 use function array_key_exists;
 use function array_unique;
 use function array_values;
@@ -19,6 +20,18 @@ use function is_array;
 
 final readonly class MigrationPlanner
 {
+    private const array RESERVED_COLUMNS = [
+        'id',
+        'identifier',
+        'team',
+        'project',
+        'collection',
+        'translations',
+        'resource',
+        'created',
+        'updated',
+    ];
+
     public function __construct(
         private BlueprintTypeMapper $typeMapper = new BlueprintTypeMapper(),
     ) {}
@@ -38,6 +51,9 @@ final readonly class MigrationPlanner
         foreach ($models as $model) {
             $table = $model->getTable();
             $fields = $model->getFillable() |> array_unique(...) |> array_values(...);
+
+            // columns the stub already defines for create migrations
+            $fields = array_values(array_diff($fields, self::RESERVED_COLUMNS));
 
             $missing = $fields;
             $create = !array_key_exists($table, $existing);
@@ -71,7 +87,16 @@ final readonly class MigrationPlanner
 
                 $method = $typeIndex[$blueprint][$column];
 
-                $lines[] = "\$table->{$method}('{$column}');";
+                // skip relationships
+                if ($method === null) {
+                    continue;
+                }
+
+                $lines[] = "\$table->{$method}('{$column}')->nullable();";
+            }
+
+            if ($lines === [] && !$create) {
+                continue;
             }
 
             $plans[] = new MigrationPlanData($table, $create, $lines);
@@ -81,7 +106,7 @@ final readonly class MigrationPlanner
     }
 
     /**
-     * @return array<string, array<string, string>>
+     * @return array<string, array<string, string|null>> null is a relationship field
      *
      * @mago-ignore analysis:all we trust typdy to deliver well-formed blueprint resources
      */
@@ -102,6 +127,8 @@ final readonly class MigrationPlanner
 
                 // skip relationships
                 if (in_array($fieldType, ['construct', 'constructs'], strict: true)) {
+                    $index[$blueprintIdentifier][Str::camel($fieldIdentifier)] = null;
+
                     continue;
                 }
 

@@ -90,9 +90,8 @@ it('plans create migrations with mapped field types and text fallback fields', f
     expect($plan->table)->toBe('typdy_articles');
     expect($plan->create)->toBeTrue();
     expect($plan->lines)->toBe([
-        '$table->string(\'title\');',
-        '$table->timestamp(\'publishedAt\');',
-        '$table->text(\'author\')->nullable();',
+        '$table->string(\'title\')->nullable();',
+        '$table->dateTime(\'publishedAt\')->nullable();',
         '$table->text(\'extraPayload\')->nullable();',
     ]);
 });
@@ -150,7 +149,7 @@ it('plans only missing fields when table already exists', function () {
     expect($plans)->toHaveCount(1);
     expect($plans[0]->create)->toBeFalse();
     expect($plans[0]->lines)->toBe([
-        '$table->text(\'summary\');',
+        '$table->text(\'summary\')->nullable();',
     ]);
 });
 

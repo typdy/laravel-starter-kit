@@ -15,7 +15,9 @@ final readonly class BlueprintTypeMapper
             'float', 'range' => 'float',
             'checkbox' => 'boolean',
             'textarea', 'rte', 'code', 'select' => 'text',
-            'date-time', 'date', 'time' => 'timestamp',
+            'date-time' => 'dateTime',
+            'date' => 'date',
+            'time' => 'time',
             default => 'json',
         };
     }

@@ -124,7 +124,7 @@ it('generates migrations from the primary interactive flow', function () {
     $content = (string) file_get_contents($generated[0]);
 
     expect($content)->toContain("Schema::create('typdy_feature_articles'");
-    expect($content)->toContain("\$table->string('title');");
+    expect($content)->toContain("\$table->string('title')->nullable();");
 });
 
 it('returns early when no models are resolved', function () {
