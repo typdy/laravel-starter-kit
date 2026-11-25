@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Typdy\StarterKit\Laravel\Tests\Unit\Console\Concerns\Fixtures;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Typdy\StarterKit\Models\Contracts\Construct;
 use Typdy\StarterKit\Parsers\Data\Resource;
 
@@ -21,9 +21,9 @@ final class FakeConstruct implements Construct
      */
     public array $meta = [];
 
-    public ?Carbon $created = null;
+    public ?CarbonInterface $created = null;
 
-    public ?Carbon $updated = null;
+    public ?CarbonInterface $updated = null;
 
     public function getBlueprint(): string
     {

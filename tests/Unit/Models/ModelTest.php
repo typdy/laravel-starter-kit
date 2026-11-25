@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -64,8 +64,8 @@ it('hydrates from resource and maps common construct fields', function () {
     expect($model->identifier)->toBe('article-42');
     expect($model->title)->toBe('Hydrated title');
     expect($model->meta)->toBe(['global' => true]);
-    expect($model->created)->toBeInstanceOf(Carbon::class);
-    expect($model->updated)->toBeInstanceOf(Carbon::class);
+    expect($model->created)->toBeInstanceOf(CarbonInterface::class);
+    expect($model->updated)->toBeInstanceOf(CarbonInterface::class);
     expect($model->getAttribute('resource'))->toBe($resource->toArray());
 });
 

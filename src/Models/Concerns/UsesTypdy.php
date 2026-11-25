@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Typdy\StarterKit\Laravel\Models\Concerns;
 
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Date;
 use InvalidArgumentException;
 use Typdy\StarterKit\Concerns\HasBlueprint;
 use Typdy\StarterKit\Concerns\HasProject;
@@ -52,18 +53,18 @@ trait UsesTypdy
 
     public ?string $identifier = null;
 
-    public ?Carbon $created = null {
-        set(string|Carbon|null $value) {
+    public ?CarbonInterface $created = null {
+        set(string|CarbonInterface|null $value) {
             if ($value !== null) {
-                $this->created = Carbon::parse($value);
+                $this->created = Date::parse($value);
             }
         }
     }
 
-    public ?Carbon $updated = null {
-        set(string|Carbon|null $value) {
+    public ?CarbonInterface $updated = null {
+        set(string|CarbonInterface|null $value) {
             if ($value !== null) {
-                $this->updated = Carbon::parse($value);
+                $this->updated = Date::parse($value);
             }
         }
     }
@@ -329,7 +330,7 @@ trait UsesTypdy
 
     private function normaliseForDivergenceCheck(mixed $value): mixed
     {
-        if ($value instanceof Carbon) {
+        if ($value instanceof CarbonInterface) {
             return $value->toISOString();
         }
 
